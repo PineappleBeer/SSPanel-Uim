@@ -11,6 +11,7 @@ use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Http\Response;
 use Slim\Http\ServerRequest;
+use App\Services\DB;
 
 final class ServerController extends BaseController
 {
@@ -23,13 +24,26 @@ final class ServerController extends BaseController
         $node_list = [];
 
         foreach ($nodes as $node) {
+            $logs = DB::select("
+            SELECT
+                id,
+                node_id,
+                last_time
+            FROM
+                online_log
+            WHERE
+                node_id = '{$node->id}'
+                AND last_time > UNIX_TIMESTAMP() - 90
+			");
+
+            $count = count($logs);
             $node_list[] = [
                 'id' => $node->id,
                 'name' => $node->name,
                 'class' => (int) $node->node_class,
                 'color' => $node->color,
                 'sort' => $node->sort(),
-                'online_user' => $node->online_user,
+                'online_user' => $count,
                 'online' => $node->getNodeOnlineStatus(),
                 'traffic_rate' => $node->traffic_rate,
                 'is_dynamic_rate' => $node->is_dynamic_rate,
