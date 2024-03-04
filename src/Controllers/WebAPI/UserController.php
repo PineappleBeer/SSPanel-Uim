@@ -51,33 +51,33 @@ final class UserController extends BaseController
             'is_banned',
             0
         )->where(
-            'class_expire',
-            '>',
-            date('Y-m-d H:i:s')
-        )->where(
-            static function ($query) use ($node): void {
-                $query->where('class', '>=', $node->node_class)
-                    ->where(static function ($query) use ($node): void {
-                        if ($node->node_group !== 0) {
-                            $query->where('node_group', $node->node_group);
-                        }
-                    });
-            }
-        )->orWhere(
-            'is_admin',
-            1
-        )->get([
-            'id',
-            'u',
-            'd',
-            'transfer_enable',
-            'node_speedlimit',
-            'node_iplimit',
-            'method',
-            'port',
-            'passwd',
-            'uuid',
-        ]);
+                'class_expire',
+                '>',
+                date('Y-m-d H:i:s')
+            )->where(
+                static function ($query) use ($node): void {
+                    $query->where('class', '>=', $node->node_class)
+                        ->where(static function ($query) use ($node): void {
+                            if ($node->node_group !== 0) {
+                                $query->where('node_group', $node->node_group);
+                            }
+                        });
+                }
+            )->orWhere(
+                'is_admin',
+                1
+            )->get([
+                    'id',
+                    'u',
+                    'd',
+                    'transfer_enable',
+                    'node_speedlimit',
+                    'node_iplimit',
+                    'method',
+                    'port',
+                    'passwd',
+                    'uuid',
+                ]);
 
         $keys_unset = match ($node->sort) {
             14, 11 => ['u', 'd', 'transfer_enable', 'method', 'port', 'passwd'],
@@ -98,7 +98,8 @@ final class UserController extends BaseController
                 }
             }
 
-            if ($user_raw->node_iplimit !== 0 &&
+            if (
+                $user_raw->node_iplimit !== 0 &&
                 $user_raw->node_iplimit <
                 (new OnlineLog())
                     ->where('user_id', $user_raw->id)
@@ -124,6 +125,7 @@ final class UserController extends BaseController
             }
 
             $user_raw->alive_ip = 0;
+            $user_raw->flow = "xtls-rprx-vision";
             $users[] = $user_raw;
         }
 
@@ -137,7 +139,7 @@ final class UserController extends BaseController
     {
         $data = json_decode($request->getBody()->__toString());
 
-        if (! $data || ! is_array($data->data)) {
+        if (!$data || !is_array($data->data)) {
             return ResponseHelper::error($response, 'Invalid data.');
         }
 
@@ -220,7 +222,7 @@ final class UserController extends BaseController
     {
         $data = json_decode($request->getBody()->__toString());
 
-        if (! $data || ! is_array($data->data)) {
+        if (!$data || !is_array($data->data)) {
             return ResponseHelper::error($response, 'Invalid data.');
         }
 
@@ -243,7 +245,7 @@ final class UserController extends BaseController
             if (Tools::isIPv4($ip)) {
                 // convert IPv4 Address to IPv4-mapped IPv6 Address
                 $ip = '::ffff:' . $ip;
-            } elseif (! Tools::isIPv6($ip)) {
+            } elseif (!Tools::isIPv6($ip)) {
                 // either IPv4 or IPv6 Address
                 continue;
             }
@@ -271,7 +273,7 @@ final class UserController extends BaseController
     {
         $data = json_decode($request->getBody()->__toString());
 
-        if (! $data || ! is_array($data->data)) {
+        if (!$data || !is_array($data->data)) {
             return ResponseHelper::error($response, 'Invalid data.');
         }
 
