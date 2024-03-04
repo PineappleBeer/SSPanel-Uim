@@ -17,7 +17,7 @@ final class V2Ray extends Base
     {
         $links = '';
         //判断是否开启V2Ray订阅
-        if (! Config::obtain('enable_v2_sub')) {
+        if (!Config::obtain('enable_v2_sub')) {
             return $links;
         }
 
@@ -25,10 +25,18 @@ final class V2Ray extends Base
 
         foreach ($nodes_raw as $node_raw) {
             $node_custom_config = json_decode($node_raw->custom_config, true);
-
+            //檢查是否配置“前端/订阅中下发的服务器地址”
+            if (!array_key_exists('server_user', $node_custom_config)) {
+                $server = $node_raw->server;
+            } else {
+                $server = $node_custom_config['server_user'];
+            }
             if ((int) $node_raw->sort === 11) {
                 $v2_port = $node_custom_config['offset_port_user'] ?? ($node_custom_config['offset_port_node'] ?? 443);
                 $security = $node_custom_config['security'] ?? 'none';
+                $sni = $node_custom_config['sni'] ?? '';
+                $pbk = $node_custom_config['pbk'] ?? '';
+                $flow = $node_custom_config['flow'] ?? '';
                 $network = $node_custom_config['network'] ?? '';
                 $header = $node_custom_config['header'] ?? ['type' => 'none'];
                 $header_type = $header['type'] ?? '';
@@ -49,7 +57,23 @@ final class V2Ray extends Base
                     'tls' => $security,
                 ];
 
-                $links .= 'vmess://' . base64_encode(json_encode($v2rayn_array)) . PHP_EOL;
+                if (($node_custom_config['enable_vless'] ?? '0') === '1') {
+                    $vless_array = [
+                        'name' => $node_raw->name,
+                        'uuid' => $user->uuid,
+                        'server' => $server,
+                        'port' => $v2_port,
+                        'encryption' => 'none',
+                        'flow' => 'xtls-rprx-vision',
+                        'security' => 'none',
+                        'type' => 'tcp',
+                        'headerType' => 'none',
+                    ];
+                    $links .= 'vless://' . $user->uuid . '@' . $server . ':' . $v2_port . '?encryption=none&flow=' . $flow . '&security=reality&sni=' . $sni . '&fp=chrome&pbk=' . $pbk . '&type=tcp&headerType=none#' . $node_raw->name . PHP_EOL;
+                    // $links .= 'vless://' . base64_encode(json_encode($vless_array, 320)) . PHP_EOL;
+                } else {
+                    $links .= 'vmess://' . base64_encode(json_encode($v2rayn_array, 320)) . PHP_EOL;
+                }
             }
         }
 
